@@ -1,0 +1,64 @@
+#importing the Libraries
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import re
+from sklearn.ensemble import RandomForestRegressor
+
+class regressionBot:
+  exit_commands = {"exit", "quit", "bye"}
+
+  def __init__(self):
+    self.matching_phrases = {'need_prediction': [r'.*need.*prediction.* (\d+)']}
+
+  #greets the boss, and asks what to do
+  def greeting(self):
+    file_name = input("Hi sir, can you give me the name of the file? If my assistance is not need, then type 'exit' or 'quit'.\n")
+    if file_name in self.exit_commands:
+      print("Ok. Let me know if you need any help again, bye sir!")
+      return
+    else:
+      self.handle_conversation(file_name)
+  
+  #handles the conversation
+  def handle_conversation(self, file_name):
+    request = input("What can I do for you, sir? If my assistance is not need, then type 'exit' or 'quit'.\n")
+    if request in self.exit_commands:
+      return 
+    else:
+      self.match_request(request,file_name)
+  
+  #matches the user request 
+  def match_request(self, request, file_name):
+    if request in self.exit_commands:
+      return
+    else:
+      for key, values in self.matching_phrases.items():
+        for regex_pattern in values:
+          found_match = re.match(regex_pattern, request)
+          if found_match and key == 'need_prediction':
+            pred_val = found_match.groups()[0]
+            pred_val_int = int(pred_val)
+            self.import_data_set(file_name, pred_val_int)
+          else:
+            request = input("I didn't understand. Can you repeat your request?\n")
+            self.match_request(request, file_name)
+      self.handle_conversation(file_name)
+
+  #importing the dataset
+  def import_data_set(self, file_name, pred_val_int):
+    dataset = pd.read_csv(file_name)
+    X = dataset.iloc[:, 1:-1].values
+    y = dataset.iloc[:, -1].values
+    self.random_forest_reg(X, y, pred_val_int)
+
+  #training the random forest regression model on the whole dataset
+  def random_forest_reg(self, X, y, pred_val_int):
+    regressor = RandomForestRegressor(n_estimators = 10, random_state = 0)
+    regressor.fit(X, y)
+
+    #predicting a new result
+    print('Prediction: ', regressor.predict([[pred_val_int]]))
+
+Bot = regressionBot()
+Bot.greeting()
